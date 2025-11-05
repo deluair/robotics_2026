@@ -26,31 +26,36 @@ except ImportError:
 class RoboticsDashboard:
     """Creates comprehensive interactive dashboard for robotics projections."""
     
-    def __init__(self):
-        self.collector = RoboticsDataCollector()
-        self.analyzer = RoboticsProjectionAnalyzer()
-        self.output_dir = os.path.join(
-            os.path.dirname(__file__), '..', 'outputs', 'figures'
-        )
-        os.makedirs(self.output_dir, exist_ok=True)
+    def __init__(self, config_instance=None):
+        """
+        Initialize the dashboard creator.
+        
+        Args:
+            config_instance: Optional custom configuration instance.
+        """
+        try:
+            from .config import config as default_config
+            from .logger_config import logger as default_logger
+        except ImportError:
+            import sys
+            import os
+            sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+            from src.config import config as default_config
+            from src.logger_config import logger as default_logger
+        
+        self.config = config_instance or default_config
+        self.logger = default_logger
+        self.collector = RoboticsDataCollector(self.config)
+        self.analyzer = RoboticsProjectionAnalyzer(self.config)
+        self.output_dir = self.config.FIGURES_DIR
         
         # Load data
+        self.logger.info("Loading data for dashboard")
         self.global_df, self.regional_df, self.installations_df = self.collector.load_data()
         self.projections = self.analyzer.generate_2026_projections()
         
-        # Color scheme
-        self.colors = {
-            'primary': '#2E86AB',
-            'secondary': '#A23B72',
-            'accent': '#F18F01',
-            'success': '#06A77D',
-            'warning': '#C73E1D',
-            'china': '#C73E1D',
-            'usa': '#2E86AB',
-            'japan': '#F18F01',
-            'germany': '#06A77D',
-            'south_korea': '#A23B72'
-        }
+        # Use color scheme from config
+        self.colors = self.config.COLORS
     
     def create_kpi_cards(self):
         """Create KPI indicator cards."""
@@ -543,8 +548,9 @@ class RoboticsDashboard:
             fig = self.create_executive_summary_dashboard()
             filename = 'robotics_dashboard_executive.html'
         
-        output_path = os.path.join(self.output_dir, filename)
-        fig.write_html(output_path, config={'displayModeBar': True})
+        output_path = self.config.get_figure_path(filename)
+        fig.write_html(str(output_path), config={'displayModeBar': True})
+        self.logger.info(f"Dashboard saved: {output_path}")
         print(f"Dashboard saved: {output_path}")
         return output_path
 

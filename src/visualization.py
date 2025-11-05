@@ -28,17 +28,38 @@ except ImportError:
 class RoboticsVisualizer:
     """Creates visualizations for robotics industry data and projections."""
     
-    def __init__(self):
-        self.collector = RoboticsDataCollector()
-        self.analyzer = RoboticsProjectionAnalyzer()
-        self.output_dir = os.path.join(
-            os.path.dirname(__file__), '..', 'outputs', 'figures'
-        )
-        os.makedirs(self.output_dir, exist_ok=True)
+    def __init__(self, config_instance=None):
+        """
+        Initialize the visualizer.
+        
+        Args:
+            config_instance: Optional custom configuration instance.
+        """
+        try:
+            from .config import config as default_config
+            from .logger_config import logger as default_logger
+            from .data_collection import RoboticsDataCollector
+            from .analysis import RoboticsProjectionAnalyzer
+        except ImportError:
+            import sys
+            import os
+            sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+            from src.config import config as default_config
+            from src.logger_config import logger as default_logger
+            from src.data_collection import RoboticsDataCollector
+            from src.analysis import RoboticsProjectionAnalyzer
+        
+        self.config = config_instance or default_config
+        self.logger = default_logger
+        self.collector = RoboticsDataCollector(self.config)
+        self.analyzer = RoboticsProjectionAnalyzer(self.config)
+        self.output_dir = self.config.FIGURES_DIR
         
         # Set style
         plt.style.use('seaborn-v0_8-darkgrid')
         sns.set_palette("husl")
+        
+        self.logger.info("Initialized RoboticsVisualizer")
     
     def plot_global_market_trend(self, save=True):
         """Plot global market size trend with 2026 projection."""

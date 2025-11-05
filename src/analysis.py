@@ -9,42 +9,78 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_absolute_percentage_error
-import os
+from typing import Dict, List, Any, Tuple
 import sys
 
 # Handle imports for both package and direct execution
 try:
     from .data_collection import RoboticsDataCollector
+    from .config import config
+    from .logger_config import logger
 except ImportError:
     # If running as script, add parent directory to path
+    import os
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from src.data_collection import RoboticsDataCollector
+    from src.config import config
+    from src.logger_config import logger
 
 
 class RoboticsProjectionAnalyzer:
-    """Analyzes historical data and generates 2026 projections."""
+    """
+    Analyzes historical data and generates 2026 projections.
     
-    def __init__(self):
-        self.collector = RoboticsDataCollector()
-        self.processed_dir = os.path.join(
-            os.path.dirname(__file__), '..', 'data', 'processed'
-        )
-        os.makedirs(self.processed_dir, exist_ok=True)
+    Uses ensemble forecasting methods to create robust projections.
+    """
+    
+    def __init__(self, config_instance=None):
+        """
+        Initialize the projection analyzer.
+        
+        Args:
+            config_instance: Optional custom configuration instance.
+        """
+        self.config = config_instance or config
+        self.collector = RoboticsDataCollector(self.config)
+        self.processed_dir = self.config.PROCESSED_DATA_DIR
+        logger.info("Initialized RoboticsProjectionAnalyzer")
     
     def load_historical_data(self):
         """Load historical data."""
         return self.collector.load_data()
     
-    def project_linear_trend(self, values, years, target_year=2026):
-        """Project using linear regression."""
-        X = np.array(years).reshape(-1, 1)
-        y = np.array(values)
+    def project_linear_trend(
+        self, 
+        values: List[float], 
+        years: List[int], 
+        target_year: int = None
+    ) -> float:
+        """
+        Project using linear regression.
         
-        model = LinearRegression()
-        model.fit(X, y)
+        Args:
+            values: Historical values
+            years: Corresponding years
+            target_year: Year to project to (defaults to config.TARGET_YEAR)
+            
+        Returns:
+            Projected value for target year
+        """
+        if target_year is None:
+            target_year = self.config.TARGET_YEAR
         
-        projection = model.predict([[target_year]])[0]
-        return max(0, projection)  # Ensure non-negative
+        try:
+            X = np.array(years).reshape(-1, 1)
+            y = np.array(values)
+            
+            model = LinearRegression()
+            model.fit(X, y)
+            
+            projection = model.predict([[target_year]])[0]
+            return max(0, projection)  # Ensure non-negative
+        except Exception as e:
+            logger.error(f"Error in linear projection: {e}", exc_info=True)
+            raise
     
     def project_polynomial_trend(self, values, years, degree=2, target_year=2026):
         """Project using polynomial regression."""
@@ -274,28 +310,40 @@ class RoboticsProjectionAnalyzer:
         
         return "\n".join(report)
     
-    def save_projections(self, projections):
-        """Save projections to CSV file."""
-        # Prepare data for CSV
-        projection_data = []
+    def save_projections(self, projections: Dict[str, Any]) -> pd.DataFrame:
+        """
+        Save projections to CSV file.
         
-        for key, value in projections.items():
-            if isinstance(value, dict):
-                projection_data.append({
-                    'metric': key,
-                    'projection_2026': value['ensemble'],
-                    'linear': value['linear'],
-                    'polynomial': value['polynomial'],
-                    'exponential_smoothing': value['exponential_smoothing'],
-                    'cagr': value['cagr'],
-                    'std_deviation': value['std']
-                })
-        
-        df = pd.DataFrame(projection_data)
-        output_path = os.path.join(self.processed_dir, 'projections_2026.csv')
-        df.to_csv(output_path, index=False)
-        print(f"\nProjections saved to: {output_path}")
-        return df
+        Args:
+            projections: Dictionary of projections
+            
+        Returns:
+            DataFrame with projections data
+        """
+        try:
+            # Prepare data for CSV
+            projection_data = []
+            
+            for key, value in projections.items():
+                if isinstance(value, dict):
+                    projection_data.append({
+                        'metric': key,
+                        'projection_2026': value['ensemble'],
+                        'linear': value['linear'],
+                        'polynomial': value['polynomial'],
+                        'exponential_smoothing': value['exponential_smoothing'],
+                        'cagr': value['cagr'],
+                        'std_deviation': value['std']
+                    })
+            
+            df = pd.DataFrame(projection_data)
+            output_path = self.config.get_processed_data_path(self.config.PROJECTIONS_FILE)
+            df.to_csv(output_path, index=False)
+            logger.info(f"Projections saved to: {output_path}")
+            return df
+        except Exception as e:
+            logger.error(f"Error saving projections: {e}", exc_info=True)
+            raise
 
 
 if __name__ == "__main__":
