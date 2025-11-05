@@ -109,9 +109,10 @@ class RoboticsVisualizer:
         plt.tight_layout()
         
         if save:
-            plt.savefig(os.path.join(self.output_dir, 'global_market_trend.png'),
-                       dpi=300, bbox_inches='tight')
-            print(f"Saved: {os.path.join(self.output_dir, 'global_market_trend.png')}")
+            output_path = self.config.get_figure_path('global_market_trend.png')
+            plt.savefig(str(output_path), dpi=self.config.FIGURE_DPI, bbox_inches='tight')
+            self.logger.info(f"Saved: {output_path}")
+            print(f"Saved: {output_path}")
         
         return fig
     
@@ -165,9 +166,10 @@ class RoboticsVisualizer:
         plt.tight_layout()
         
         if save:
-            plt.savefig(os.path.join(self.output_dir, 'regional_comparison.png'),
-                       dpi=300, bbox_inches='tight')
-            print(f"Saved: {os.path.join(self.output_dir, 'regional_comparison.png')}")
+            output_path = self.config.get_figure_path('regional_comparison.png')
+            plt.savefig(str(output_path), dpi=self.config.FIGURE_DPI, bbox_inches='tight')
+            self.logger.info(f"Saved: {output_path}")
+            print(f"Saved: {output_path}")
         
         return fig
     
@@ -212,9 +214,10 @@ class RoboticsVisualizer:
         plt.tight_layout()
         
         if save:
-            plt.savefig(os.path.join(self.output_dir, 'segment_breakdown.png'),
-                       dpi=300, bbox_inches='tight')
-            print(f"Saved: {os.path.join(self.output_dir, 'segment_breakdown.png')}")
+            output_path = self.config.get_figure_path('segment_breakdown.png')
+            plt.savefig(str(output_path), dpi=self.config.FIGURE_DPI, bbox_inches='tight')
+            self.logger.info(f"Saved: {output_path}")
+            print(f"Saved: {output_path}")
         
         return fig
     
@@ -322,8 +325,9 @@ class RoboticsVisualizer:
         fig.update_yaxes(title_text="Market Size (Billion USD)", row=2, col=2)
         
         if save:
-            output_path = os.path.join(self.output_dir, 'china_market_analysis.html')
-            fig.write_html(output_path)
+            output_path = self.config.get_figure_path('china_market_analysis.html')
+            fig.write_html(str(output_path))
+            self.logger.info(f"Saved: {output_path}")
             print(f"Saved: {output_path}")
         
         return fig
