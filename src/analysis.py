@@ -104,7 +104,7 @@ class RoboticsProjectionAnalyzer:
         projections.append(linear)
         
         # Polynomial projection (degree 2)
-        poly2 = self.project_polynomial_trend(values, years, degree=2, target_year)
+        poly2 = self.project_polynomial_trend(values, years, degree=2, target_year=target_year)
         projections.append(poly2)
         
         # Exponential smoothing
