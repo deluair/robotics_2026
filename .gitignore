@@ -22,6 +22,12 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -33,26 +39,45 @@ wheels/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
-# Data files (optional - uncomment if you don't want to track data)
-# data/raw/
-# data/processed/
-*.csv
-*.xlsx
-*.json
+# Data files (keep structure, ignore generated data)
+data/raw/*.csv
+data/processed/*.csv
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 
-# Output files
-outputs/
-figures/
-*.png
-*.jpg
-*.pdf
+# Output files (keep structure, ignore generated outputs)
+outputs/figures/*.png
+outputs/figures/*.html
+outputs/reports/*.txt
+outputs/reports/*.pdf
+!outputs/figures/.gitkeep
+!outputs/reports/.gitkeep
+
+# Logs
+*.log
+logs/
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Environment variables
 .env
 .env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
 
